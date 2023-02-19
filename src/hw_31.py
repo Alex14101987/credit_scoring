@@ -1,1 +1,177 @@
-{"metadata":{"kernelspec":{"language":"python","display_name":"Python 3","name":"python3"},"language_info":{"name":"python","version":"3.7.12","mimetype":"text/x-python","codemirror_mode":{"name":"ipython","version":3},"pygments_lexer":"ipython3","nbconvert_exporter":"python","file_extension":".py"}},"nbformat_minor":4,"nbformat":4,"cells":[{"cell_type":"code","source":"# %% [markdown]\n# Скрипт работает, но долго. Примерно 100 минут на Kaggle. Узким местом являются циклы.\n# \n# Подскажите, пожалуйста, почему эта строка выдает только NaN?\n# bureau['CREDIT_CURRENCY'] = df12['data.record.AmtCredit'].str['CREDIT_CURRENCY']\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:57:54.432004Z\",\"iopub.execute_input\":\"2023-02-18T07:57:54.432446Z\",\"iopub.status.idle\":\"2023-02-18T07:57:54.441858Z\",\"shell.execute_reply.started\":\"2023-02-18T07:57:54.432409Z\",\"shell.execute_reply\":\"2023-02-18T07:57:54.440028Z\"}}\nimport json\nimport os\nimport numpy as np\nimport pandas as pd\nfrom sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nimport time\nimport json\nimport random\nimport warnings\nwarnings.filterwarnings('ignore')\nfrom dataclasses import asdict\nstart_time = time.time()\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:57:54.444802Z\",\"iopub.execute_input\":\"2023-02-18T07:57:54.445433Z\",\"iopub.status.idle\":\"2023-02-18T07:57:54.455564Z\",\"shell.execute_reply.started\":\"2023-02-18T07:57:54.445348Z\",\"shell.execute_reply\":\"2023-02-18T07:57:54.454199Z\"}}\nuploaded= '/kaggle/input/shiftlogs/POS_CASH_balance_plus_bureau-001.log'\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:57:54.457861Z\",\"iopub.execute_input\":\"2023-02-18T07:57:54.458351Z\",\"iopub.status.idle\":\"2023-02-18T07:58:11.885732Z\",\"shell.execute_reply.started\":\"2023-02-18T07:57:54.458314Z\",\"shell.execute_reply\":\"2023-02-18T07:58:11.884153Z\"}}\n%%time\nlog_list = []\nposh_log_list = []\n\nwith open(uploaded, 'r') as file:\n    for line in file:\n#         print(line)\n        log_list.append(line)\n\nx = log_list[45052]                       # экономим время 1716501\nlog_list = random.sample(log_list, 17165) # экономим время 1716501\nlog_list.append(x)                        # экономим время 1716501\n\ndf = pd.DataFrame(log_list, columns=['log_list'])\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:58:11.889078Z\",\"iopub.execute_input\":\"2023-02-18T07:58:11.889473Z\",\"iopub.status.idle\":\"2023-02-18T07:58:12.087150Z\",\"shell.execute_reply.started\":\"2023-02-18T07:58:11.889440Z\",\"shell.execute_reply\":\"2023-02-18T07:58:12.085696Z\"}}\n%%time\ndf['log_list'] = df['log_list'].apply(lambda x: json.loads(x))\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:58:12.089304Z\",\"iopub.execute_input\":\"2023-02-18T07:58:12.089762Z\",\"iopub.status.idle\":\"2023-02-18T07:58:12.136226Z\",\"shell.execute_reply.started\":\"2023-02-18T07:58:12.089724Z\",\"shell.execute_reply\":\"2023-02-18T07:58:12.134869Z\"}}\n# делим датафрейм, вытаскиваем отдельно логи для POS_CASH_balance\n\ndf1 = df[df['log_list'].str['type']!='bureau']\n\ndf11 = df[df['log_list'].str['type']=='bureau']\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:58:12.137985Z\",\"iopub.execute_input\":\"2023-02-18T07:58:12.138725Z\",\"iopub.status.idle\":\"2023-02-18T07:58:12.191473Z\",\"shell.execute_reply.started\":\"2023-02-18T07:58:12.138682Z\",\"shell.execute_reply\":\"2023-02-18T07:58:12.189644Z\"}}\n%%time\n\ndf2 = pd.json_normalize(df1['log_list'])\n\ndf2\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:58:12.193528Z\",\"iopub.execute_input\":\"2023-02-18T07:58:12.193907Z\",\"iopub.status.idle\":\"2023-02-18T07:58:12.202209Z\",\"shell.execute_reply.started\":\"2023-02-18T07:58:12.193866Z\",\"shell.execute_reply\":\"2023-02-18T07:58:12.200847Z\"}}\ndef normalize_column(df: pd.DataFrame, column: str) -> pd.DataFrame:\n    \"\"\"Заменяет колонку со словарем на несколько колонок.\n    \n    Имена новых колонок - ключи словаря\n    Значения в новых колонок - значения по заданному ключу в словаре\n    \"\"\"\n    return pd.concat(\n        [\n            df, \n            pd.json_normalize(df[column]),\n        ], \n        axis=1\n    ).drop(columns=[column])\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:58:12.204159Z\",\"iopub.execute_input\":\"2023-02-18T07:58:12.204687Z\",\"iopub.status.idle\":\"2023-02-18T07:58:12.283346Z\",\"shell.execute_reply.started\":\"2023-02-18T07:58:12.204648Z\",\"shell.execute_reply\":\"2023-02-18T07:58:12.281899Z\"}}\n%%time\n\ndf3 = df2.explode('data.records')\ndf3.reset_index(drop=True)\ndf3 = normalize_column(df3.reset_index(drop=True), 'data.records')\n\ndf3\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:58:12.287516Z\",\"iopub.execute_input\":\"2023-02-18T07:58:12.288082Z\",\"iopub.status.idle\":\"2023-02-18T07:58:12.297141Z\",\"shell.execute_reply.started\":\"2023-02-18T07:58:12.288031Z\",\"shell.execute_reply\":\"2023-02-18T07:58:12.295065Z\"}}\n# \n\nfrom dataclasses import dataclass\n\n@dataclass\nclass PosCashBalanceIDs:\n    SK_ID_PREV: int\n    SK_ID_CURR: int\n    NAME_CONTRACT_STATUS: str\n        \n# df3['PosCashBalanceIDs'] = df3['PosCashBalanceIDs'].apply(lambda x: [eval(doc) for doc in x])\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:58:12.299018Z\",\"iopub.execute_input\":\"2023-02-18T07:58:12.299504Z\",\"iopub.status.idle\":\"2023-02-18T07:58:12.398979Z\",\"shell.execute_reply.started\":\"2023-02-18T07:58:12.299463Z\",\"shell.execute_reply\":\"2023-02-18T07:58:12.396839Z\"}}\n%%time\n\ndf3['PosCashBalanceIDs'] = df3['PosCashBalanceIDs'].apply(lambda x: eval(x))\n\n# for n in range(len(df3)):\n#     df3['PosCashBalanceIDs'].loc[n] = eval(df3['PosCashBalanceIDs'].loc[n])\n    \ndf3\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T08:19:23.866036Z\",\"iopub.execute_input\":\"2023-02-18T08:19:23.866941Z\",\"iopub.status.idle\":\"2023-02-18T08:19:23.927348Z\",\"shell.execute_reply.started\":\"2023-02-18T08:19:23.866880Z\",\"shell.execute_reply\":\"2023-02-18T08:19:23.925908Z\"}}\n%%time\n\nPOS_CASH_balance = pd.DataFrame()\n\n# POS_CASH_balance[\"SK_ID_PREV\"] = np.nan\n# for n in range(len(df3)):\n#     POS_CASH_balance['SK_ID_PREV'].loc[n] = df3['PosCashBalanceIDs'].loc[n].SK_ID_PREV\nPOS_CASH_balance['SK_ID_PREV'] = df3['PosCashBalanceIDs'].str['SK_ID_PREV']\n    \n# POS_CASH_balance[\"SK_ID_CURR\"] = 0\n# for n in range(len(df3)):\n#     POS_CASH_balance['SK_ID_CURR'].loc[n] = df3['PosCashBalanceIDs'].loc[n].SK_ID_CURR\nPOS_CASH_balance['SK_ID_CURR'] = df3['PosCashBalanceIDs'].str['SK_ID_CURR']\n    \nPOS_CASH_balance['MONTHS_BALANCE'] = df3['MONTHS_BALANCE']\nPOS_CASH_balance['CNT_INSTALMENT'] = df3['data.CNT_INSTALMENT']\n\nPOS_CASH_balance['CNT_INSTALMENT_FUTURE'] = df3['CNT_INSTALMENT_FUTURE']\n\n# POS_CASH_balance[\"NAME_CONTRACT_STATUS\"] = np.nan\n# for n in range(len(df3)):\n#     POS_CASH_balance['NAME_CONTRACT_STATUS'].loc[n] = df3['PosCashBalanceIDs'].loc[n].NAME_CONTRACT_STATUS\nPOS_CASH_balance['NAME_CONTRACT_STATUS'] = df3['PosCashBalanceIDs'].str['NAME_CONTRACT_STATUS']\n\nPOS_CASH_balance['SK_DPD'] = df3['SK_DPD']\nPOS_CASH_balance['SK_DPD_DEF'] = df3['SK_DPD_DEF']\n\nPOS_CASH_balance\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:58:12.456813Z\",\"iopub.execute_input\":\"2023-02-18T07:58:12.457385Z\",\"iopub.status.idle\":\"2023-02-18T07:58:12.464964Z\",\"shell.execute_reply.started\":\"2023-02-18T07:58:12.457350Z\",\"shell.execute_reply\":\"2023-02-18T07:58:12.463604Z\"}}\n# \n\nfrom dataclasses import dataclass\n\n@dataclass\nclass AmtCredit:\n    CREDIT_CURRENCY: str\n    AMT_CREDIT_MAX_OVERDUE: float\n    AMT_CREDIT_SUM: float\n    AMT_CREDIT_SUM_DEBT: float\n    AMT_CREDIT_SUM_LIMIT: float\n    AMT_CREDIT_SUM_OVERDUE: float\n    AMT_ANNUITY: float\n        \n# df['AmtCredit'] = df['AmtCredit'].apply(lambda x: [eval(doc) for doc in x])\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:59:54.685532Z\",\"iopub.execute_input\":\"2023-02-18T07:59:54.686086Z\",\"iopub.status.idle\":\"2023-02-18T07:59:55.067919Z\",\"shell.execute_reply.started\":\"2023-02-18T07:59:54.686048Z\",\"shell.execute_reply\":\"2023-02-18T07:59:55.066439Z\"}}\ndf12 = pd.json_normalize(df11['log_list'])\ndf12\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T08:01:28.863207Z\",\"iopub.execute_input\":\"2023-02-18T08:01:28.863647Z\",\"iopub.status.idle\":\"2023-02-18T08:01:29.345730Z\",\"shell.execute_reply.started\":\"2023-02-18T08:01:28.863614Z\",\"shell.execute_reply\":\"2023-02-18T08:01:29.344374Z\"}}\n%%time\n\n# df11['AmtCredit'] = df11['log_list'].str['data'].str['record'].str['AmtCredit']       \n# for n in range(len(df11)):\n#     df11['AmtCredit'].loc[n] = eval(df11['AmtCredit'].loc[n])\n\ndf12['data.record.AmtCredit'] = df12['data.record.AmtCredit'].apply(lambda x: eval(x))\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T08:10:16.523347Z\",\"iopub.execute_input\":\"2023-02-18T08:10:16.523806Z\",\"iopub.status.idle\":\"2023-02-18T08:10:16.560558Z\",\"shell.execute_reply.started\":\"2023-02-18T08:10:16.523754Z\",\"shell.execute_reply\":\"2023-02-18T08:10:16.559092Z\"}}\n%%time\n\nbureau = pd.DataFrame()\n\nbureau['SK_ID_CURR'] = df12['data.record.SK_ID_CURR']\nbureau['SK_ID_BUREAU'] = df12['data.record.SK_ID_BUREAU']\nbureau['CREDIT_ACTIVE'] = df12['data.record.CREDIT_ACTIVE']\n\n# bureau[\"CREDIT_CURRENCY\"] = np.nan\n# for n in range(len(df11)):\n#     bureau['CREDIT_CURRENCY'].loc[n] = df11['AmtCredit'].loc[n].CREDIT_CURRENCY\nbureau['CREDIT_CURRENCY'] = df12['data.record.AmtCredit'].str['CREDIT_CURRENCY']\n    \n# bureau['DAYS_CREDIT'] = df12['log_list'].str['data'].str['record'].str['DAYS_CREDIT']\n# bureau['CREDIT_DAY_OVERDUE'] = df12['log_list'].str['data'].str['record'].str['CREDIT_DAY_OVERDUE']\n# bureau['DAYS_CREDIT_ENDDATE'] = df12['log_list'].str['data'].str['record'].str['DAYS_CREDIT_ENDDATE']\n# bureau['DAYS_ENDDATE_FACT'] = df12['log_list'].str['data'].str['record'].str['DAYS_ENDDATE_FACT']\n\n# # bureau[\"AMT_CREDIT_MAX_OVERDUE\"] = np.nan\n# # for n in range(len(df11)):\n# #     bureau['AMT_CREDIT_MAX_OVERDUE'].loc[n] = df11['AmtCredit'].loc[n].AMT_CREDIT_MAX_OVERDUE\n    \nbureau['CNT_CREDIT_PROLONG'] = df12['log_list'].str['data'].str['record'].str['CNT_CREDIT_PROLONG']\n\n# # bureau[\"AMT_CREDIT_SUM\"] = np.nan\n# # for n in range(len(df11)):\n# #     bureau['AMT_CREDIT_SUM'].loc[n] = df11['AmtCredit'].loc[n].AMT_CREDIT_SUM\n    \n# # bureau[\"AMT_CREDIT_SUM_DEBT\"] = np.nan\n# # for n in range(len(df11)):\n# #     bureau['AMT_CREDIT_SUM_DEBT'].loc[n] = df11['AmtCredit'].loc[n].AMT_CREDIT_SUM_DEBT\n    \n# # bureau[\"AMT_CREDIT_SUM_LIMIT\"] = np.nan\n# # for n in range(len(df11)):\n# #     bureau['AMT_CREDIT_SUM_LIMIT'].loc[n] = df11['AmtCredit'].loc[n].AMT_CREDIT_SUM_LIMIT\n    \n# # bureau[\"AMT_CREDIT_SUM_OVERDUE\"] = np.nan\n# # for n in range(len(df11)):\n# #     bureau['AMT_CREDIT_SUM_OVERDUE'].loc[n] = df11['AmtCredit'].loc[n].AMT_CREDIT_SUM_OVERDUE\n    \nbureau['CREDIT_TYPE'] = df12['log_list'].str['data'].str['CREDIT_TYPE']\nbureau['DAYS_CREDIT_UPDATE'] = df12['log_list'].str['data'].str['record'].str['DAYS_CREDIT_UPDATE']\n\n# # bureau[\"AMT_ANNUITY\"] = np.nan\n# # for n in range(len(df11)):\n# #     bureau['AMT_ANNUITY'].loc[n] = df11['AmtCredit'].loc[n].AMT_ANNUITY\n\nbureau\n\n# %% [code] {\"execution\":{\"iopub.status.busy\":\"2023-02-18T07:58:12.833012Z\",\"iopub.execute_input\":\"2023-02-18T07:58:12.833847Z\",\"iopub.status.idle\":\"2023-02-18T07:58:12.912838Z\",\"shell.execute_reply.started\":\"2023-02-18T07:58:12.833728Z\",\"shell.execute_reply\":\"2023-02-18T07:58:12.910826Z\"}}\nPOS_CASH_balance.to_csv('POS_CASH_balance.csv')\nbureau.to_csv('bureau.csv')\nend_time = time.time()\nprint(\"Execution time: \", (end_time - start_time)/60,\"mins\")","metadata":{"_uuid":"981f3392-7aad-4f46-833d-ab89d0d57101","_cell_guid":"d412bc57-1d7f-4db3-a212-687a9262303c","collapsed":false,"jupyter":{"outputs_hidden":false},"execution":{"iopub.status.busy":"2023-02-19T03:52:28.438190Z","iopub.execute_input":"2023-02-19T03:52:28.438592Z","iopub.status.idle":"2023-02-19T03:52:28.558901Z","shell.execute_reply.started":"2023-02-19T03:52:28.438561Z","shell.execute_reply":"2023-02-19T03:52:28.557376Z"},"trusted":true},"execution_count":2,"outputs":[{"name":"stderr","text":"UsageError: Line magic function `%%time` not found.\n","output_type":"stream"}]}]}
+# Подскажите, пожалуйста, почему эта строка выдает только NaN?
+# bureau['CREDIT_CURRENCY'] = df12['data.record.AmtCredit'].str['CREDIT_CURRENCY']
+
+import json
+import os
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder
+import matplotlib.pyplot as plt
+import seaborn as sns
+import time
+import json
+import random
+import warnings
+warnings.filterwarnings('ignore')
+from dataclasses import asdict
+
+# путь к лог.файлу
+path_log = 'POS_CASH_balance_plus_bureau-001.log'
+# пути к двум CSV.файлам
+path_bureau = 'bureau.csv'
+path_POS_CASH_balance = 'POS_CASH_balance.csv'
+
+def main(path_log: str, path_bureau: str, path_POS_CASH_balance: str) -> pd.DataFrame:
+    start_time = time.time()
+
+    uploaded = path_log
+
+    log_list = []
+
+    with open(uploaded, 'r') as file:
+        for line in file:
+            #         print(line)
+            log_list.append(line)
+
+    x = log_list[45052]  # экономим время 1716501
+    log_list = random.sample(log_list, 17165)  # экономим время 1716501
+    log_list.append(x)  # экономим время 1716501
+
+    df = pd.DataFrame(log_list, columns=['log_list'])
+
+    df['log_list'] = df['log_list'].apply(lambda x: json.loads(x))
+    # print(df)
+    # делим датафрейм, вытаскиваем отдельно логи для POS_CASH_balance
+
+    df1 = df[df['log_list'].str['type'] != 'bureau']
+
+    df11 = df[df['log_list'].str['type'] == 'bureau']
+
+    df2 = pd.json_normalize(df1['log_list'])
+
+    def normalize_column(df: pd.DataFrame, column: str) -> pd.DataFrame:
+        """Заменяет колонку со словарем на несколько колонок.
+
+        Имена новых колонок - ключи словаря
+        Значения в новых колонок - значения по заданному ключу в словаре
+        """
+        return pd.concat(
+            [
+                df,
+                pd.json_normalize(df[column]),
+            ],
+            axis=1
+        ).drop(columns=[column])
+
+    df3 = df2.explode('data.records')
+    df3.reset_index(drop=True)
+    df3 = normalize_column(df3.reset_index(drop=True), 'data.records')
+
+    from dataclasses import dataclass
+
+    @dataclass
+    class PosCashBalanceIDs:
+        SK_ID_PREV: int
+        SK_ID_CURR: int
+        NAME_CONTRACT_STATUS: str
+
+    # Вот здесь почему-то не видит название колонки хотя оно есть
+    print(df3.columns)
+    df3['PosCashBalanceIDs'] = df3['PosCashBalanceIDs'].apply(lambda x: eval(x))
+
+    POS_CASH_balance = pd.DataFrame()
+
+    # POS_CASH_balance["SK_ID_PREV"] = np.nan
+    # for n in range(len(df3)):
+    #     POS_CASH_balance['SK_ID_PREV'].loc[n] = df3['PosCashBalanceIDs'].loc[n].SK_ID_PREV
+    POS_CASH_balance['SK_ID_PREV'] = df3['PosCashBalanceIDs'].str['SK_ID_PREV']
+
+    # POS_CASH_balance["SK_ID_CURR"] = 0
+    # for n in range(len(df3)):
+    #     POS_CASH_balance['SK_ID_CURR'].loc[n] = df3['PosCashBalanceIDs'].loc[n].SK_ID_CURR
+    POS_CASH_balance['SK_ID_CURR'] = df3['PosCashBalanceIDs'].str['SK_ID_CURR']
+
+    POS_CASH_balance['MONTHS_BALANCE'] = df3['MONTHS_BALANCE']
+    POS_CASH_balance['CNT_INSTALMENT'] = df3['data.CNT_INSTALMENT']
+
+    POS_CASH_balance['CNT_INSTALMENT_FUTURE'] = df3['CNT_INSTALMENT_FUTURE']
+
+    # POS_CASH_balance["NAME_CONTRACT_STATUS"] = np.nan
+    # for n in range(len(df3)):
+    #     POS_CASH_balance['NAME_CONTRACT_STATUS'].loc[n] = df3['PosCashBalanceIDs'].loc[n].NAME_CONTRACT_STATUS
+    POS_CASH_balance['NAME_CONTRACT_STATUS'] = df3['PosCashBalanceIDs'].str['NAME_CONTRACT_STATUS']
+
+    POS_CASH_balance['SK_DPD'] = df3['SK_DPD']
+    POS_CASH_balance['SK_DPD_DEF'] = df3['SK_DPD_DEF']
+
+    from dataclasses import dataclass
+
+    @dataclass
+    class AmtCredit:
+        CREDIT_CURRENCY: str
+        AMT_CREDIT_MAX_OVERDUE: float
+        AMT_CREDIT_SUM: float
+        AMT_CREDIT_SUM_DEBT: float
+        AMT_CREDIT_SUM_LIMIT: float
+        AMT_CREDIT_SUM_OVERDUE: float
+        AMT_ANNUITY: float
+
+    df12 = pd.json_normalize(df11['log_list'])
+
+    # df11['AmtCredit'] = df11['log_list'].str['data'].str['record'].str['AmtCredit']
+    # for n in range(len(df11)):
+    #     df11['AmtCredit'].loc[n] = eval(df11['AmtCredit'].loc[n])
+
+    df12['data.record.AmtCredit'] = df12['data.record.AmtCredit'].apply(lambda x: eval(x))
+
+    bureau = pd.DataFrame()
+
+    bureau['SK_ID_CURR'] = df12['data.record.SK_ID_CURR']
+    bureau['SK_ID_BUREAU'] = df12['data.record.SK_ID_BUREAU']
+    bureau['CREDIT_ACTIVE'] = df12['data.record.CREDIT_ACTIVE']
+
+    # bureau["CREDIT_CURRENCY"] = np.nan
+    # for n in range(len(df11)):
+    #     bureau['CREDIT_CURRENCY'].loc[n] = df11['AmtCredit'].loc[n].CREDIT_CURRENCY
+    bureau['CREDIT_CURRENCY'] = df12['data.record.AmtCredit'].str['CREDIT_CURRENCY']
+
+    # bureau['DAYS_CREDIT'] = df12['log_list'].str['data'].str['record'].str['DAYS_CREDIT']
+    # bureau['CREDIT_DAY_OVERDUE'] = df12['log_list'].str['data'].str['record'].str['CREDIT_DAY_OVERDUE']
+    # bureau['DAYS_CREDIT_ENDDATE'] = df12['log_list'].str['data'].str['record'].str['DAYS_CREDIT_ENDDATE']
+    # bureau['DAYS_ENDDATE_FACT'] = df12['log_list'].str['data'].str['record'].str['DAYS_ENDDATE_FACT']
+
+    # # bureau["AMT_CREDIT_MAX_OVERDUE"] = np.nan
+    # # for n in range(len(df11)):
+    # #     bureau['AMT_CREDIT_MAX_OVERDUE'].loc[n] = df11['AmtCredit'].loc[n].AMT_CREDIT_MAX_OVERDUE
+
+    bureau['CNT_CREDIT_PROLONG'] = df12['log_list'].str['data'].str['record'].str['CNT_CREDIT_PROLONG']
+
+    # # bureau["AMT_CREDIT_SUM"] = np.nan
+    # # for n in range(len(df11)):
+    # #     bureau['AMT_CREDIT_SUM'].loc[n] = df11['AmtCredit'].loc[n].AMT_CREDIT_SUM
+
+    # # bureau["AMT_CREDIT_SUM_DEBT"] = np.nan
+    # # for n in range(len(df11)):
+    # #     bureau['AMT_CREDIT_SUM_DEBT'].loc[n] = df11['AmtCredit'].loc[n].AMT_CREDIT_SUM_DEBT
+
+    # # bureau["AMT_CREDIT_SUM_LIMIT"] = np.nan
+    # # for n in range(len(df11)):
+    # #     bureau['AMT_CREDIT_SUM_LIMIT'].loc[n] = df11['AmtCredit'].loc[n].AMT_CREDIT_SUM_LIMIT
+
+    # # bureau["AMT_CREDIT_SUM_OVERDUE"] = np.nan
+    # # for n in range(len(df11)):
+    # #     bureau['AMT_CREDIT_SUM_OVERDUE'].loc[n] = df11['AmtCredit'].loc[n].AMT_CREDIT_SUM_OVERDUE
+
+    bureau['CREDIT_TYPE'] = df12['log_list'].str['data'].str['CREDIT_TYPE']
+    bureau['DAYS_CREDIT_UPDATE'] = df12['log_list'].str['data'].str['record'].str['DAYS_CREDIT_UPDATE']
+
+    # # bureau["AMT_ANNUITY"] = np.nan
+    # # for n in range(len(df11)):
+    # #     bureau['AMT_ANNUITY'].loc[n] = df11['AmtCredit'].loc[n].AMT_ANNUITY
+
+    POS_CASH_balance.to_csv(path_POS_CASH_balance)
+    bureau.to_csv(path_bureau)
+    end_time = time.time()
+    print("Execution time: ", (end_time - start_time) / 60, "mins")
+
+main(path_log, path_bureau, path_POS_CASH_balance)
