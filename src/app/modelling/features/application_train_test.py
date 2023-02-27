@@ -1,18 +1,3 @@
-import json
-import os
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder
-import matplotlib.pyplot as plt
-import seaborn as sns
-import time
-import json
-import random
-import warnings
-warnings.filterwarnings('ignore')
-from dataclasses import asdict
-from datetime import datetime, date
-import io
 import numpy as np
 import pandas as pd
 
@@ -58,8 +43,8 @@ application_train_test['Процентная ставка'] = ((all_data['AMT_CR
 
 application_train_test[['скор внеешних источников1', 'скор внеешних источников2', 'скор внеешних источников3']] = all_data[['EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3']]
 
-result = all_data.groupby(["CODE_GENDER", "NAME_EDUCATION_TYPE"]).agg({'AMT_INCOME_TOTAL': ['mean']})
-# result = all_data.groupby(["CODE_GENDER", "NAME_EDUCATION_TYPE"])["AMT_INCOME_TOTAL"].mean().diff()
-# application_train_test['разница емжду средним доходом в группе и доходом заявителя'] = all_data['AMT_CREDIT'].diff(result)
+# result = all_data.groupby(["CODE_GENDER", "NAME_EDUCATION_TYPE"]).agg({'AMT_INCOME_TOTAL': ['mean']})
+result = all_data.groupby(["CODE_GENDER", "NAME_EDUCATION_TYPE"])["AMT_INCOME_TOTAL"].mean().diff()
+application_train_test['разница емжду средним доходом в группе и доходом заявителя'] = all_data['AMT_CREDIT'].diff(result)
 
 application_train_test.to_csv('application_train_test.csv', index = False)

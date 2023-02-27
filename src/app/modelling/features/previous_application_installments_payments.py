@@ -1,19 +1,3 @@
-import json
-import os
-import numpy as np
-import pandas as pd
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder
-import matplotlib.pyplot as plt
-import seaborn as sns
-import time
-import json
-import random
-import warnings
-warnings.filterwarnings('ignore')
-from dataclasses import asdict
-from datetime import datetime, date
-import io
-import numpy as np
 import pandas as pd
 
 df = pd.read_csv('/kaggle/input/shiftlogs/previous_application.csv')
