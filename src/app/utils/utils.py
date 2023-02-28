@@ -1,54 +1,33 @@
-class MyDatabase:
+def send_sql_query(query: str, args: dict):
     """
-    Класс представляет собой соединение к базе данных, 
-    через которое можно отрпавлять запросы и получать ответы
+    Выполняет запрос к базе.
 
-    :param db:  название БД.
-    :type db: str
-    :param user: имя пользователя БД.
-    :type user: str
-    :param host: хост для подключения к БД.
-    :type host: str
-    :param password: парль пользователя БД.
-    :type password: str
+    :param query: строка с sql запросом.
+    :param args: аргументы для подключения в БД.
     """
+    conn = psycopg2.connect(**args)
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query)
+        conn.commit()
+    except (Exception, psycopg2.Error) as error:
+        print("Error while fetching data from PostgreSQL", error)
+    finally:
+        if conn:
+            cursor.close()
+            conn.close()
 
-    def __init__(self, db_params: dict):
-        self.db_params = db_params
-    
-    def conn(self):
-        """
-        Открывает соединение с БД.
-        """
-        self.conn = psycopg2.connect(**self.db_params)
-        self.cur = self.conn.cursor()
 
-    def send_query(self, query):
-        """
-        Выполняет запрос к базе.
+def get_df_from_query(query: str, args: dict) -> pd.DataFrame:
+    """
+    Выполняет запрос к базе.
 
-        :param query: строка с sql запросом.
-        """
-        try:
-            self.cur.execute(query)
-            self.conn.commit()
-        except (Exception, psycopg2.Error) as error:
-            print("Error while fetching data from PostgreSQL", error)
+    :param query: строка с sql запросом.
+    :param args: аргументы для подключения в БД.
 
-    def get_query(self, query):
-        """
-        Выполняет запрос к базе, который должен вернуть результат
-
-        :param query: строка с sql запросом.
-
-        :return: pandas.DataFrame
-        """
-        df = pd.read_sql(query, self.conn)
-        return df
-
-    def close(self):
-        """
-        Закрывает соединение с БД.
-        """
-        self.cur.close()
-        self.conn.close()
+    :return df: датафрейм с результатом.
+    """
+    conn = psycopg2.connect(**args)
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
