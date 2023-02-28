@@ -13,12 +13,14 @@ class MyDatabase:
     :type password: str
     """
 
-    def __init__(self, db="mydb", user="postgres", host="127.0.0.1", password="postgres"):
-        self.conn = psycopg2.connect(dbname=db,
-                                     user=user,
-                                     host=host,
-                                     password=password
-                                     )
+    def __init__(self, db_params: dict):
+        self.db_params = db_params
+    
+    def conn(self):
+        """
+        Открывает соединение с БД.
+        """
+        self.conn = psycopg2.connect(**self.db_params)
         self.cur = self.conn.cursor()
 
     def send_query(self, query):
