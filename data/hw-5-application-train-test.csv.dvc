@@ -1,0 +1,4 @@
+outs:
+- md5: 3d5de8905810d3b29c778eb9dee8946b
+  size: 4193
+  path: hw-5-application-train-test.csv
