@@ -25,11 +25,10 @@ application_train_test['Информация о доме'] = np.where(all_data.l
 
 application_train_test['Кол-во полных лет'] = abs(all_data['DAYS_BIRTH']/365).apply(np.int64)
 
-application_train_test['Год смены документа'] = application_train_test['Кол-во полных лет'] - abs(all_data['DAYS_REGISTRATION']/365).apply(np.int64)
+application_train_test['Год смены документа'] = abs(all_data['DAYS_BIRTH']/365).apply(np.int64) - abs(all_data['DAYS_REGISTRATION']/365).apply(np.int64)
 
-# application_train_test['Разница во времени между сменой документа и возрастом на момент смены документы'] = вообще не понял вопроса =)
-
-application_train_test['Признак задержки смены документа'] = np.where(application_train_test['Год смены документа'] != 14|20|45, 1, 0)
+application_train_test['Признак задержки смены документа'] = np.where(abs(all_data['DAYS_BIRTH']/365).apply(np.int64)
+                                                                      - abs(all_data['DAYS_REGISTRATION']/365).apply(np.int64) != 14|20|45, 1, 0)
 
 application_train_test['Доля денег которые клиент отдает на займ за год'] = all_data['AMT_ANNUITY']/all_data['AMT_INCOME_TOTAL']
 
@@ -43,7 +42,6 @@ application_train_test['Процентная ставка'] = ((all_data['AMT_CR
 
 application_train_test[['скор внеешних источников1', 'скор внеешних источников2', 'скор внеешних источников3']] = all_data[['EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3']]
 
-# result = all_data.groupby(["CODE_GENDER", "NAME_EDUCATION_TYPE"]).agg({'AMT_INCOME_TOTAL': ['mean']})
 result = all_data.groupby(["CODE_GENDER", "NAME_EDUCATION_TYPE"])["AMT_INCOME_TOTAL"].mean().diff()
 application_train_test['разница емжду средним доходом в группе и доходом заявителя'] = all_data['AMT_CREDIT'].diff(result)
 
