@@ -1,0 +1,12 @@
+dvc run \
+--name step1_prepare_dataset \
+--deps  E:/credit_scoring/src/step1_prepare_dataset.py \
+--outs  E:/credit_scoring/data/step1_result_file.csv \
+python -u  E:/credit_scoring/src/step1_prepare_dataset.py
+
+
+dvc run \
+-n step1_prepare_dataset \
+--deps ../src/step1_prepare_dataset.py \
+--outs ../data/step1_result_file.csv \
+python -u ../src/step1_prepare_dataset.py
