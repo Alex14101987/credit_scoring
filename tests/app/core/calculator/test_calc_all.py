@@ -1,6 +1,6 @@
 # from src.app.core.hw_10_calculator import Calculator
 # from src.app.core.hw_10_api import Features
-# импорты почему-то не работали...
+# импорты почему-то не работали ри обращении к ним pytest, поэтому добавил классы сюда...
 
 import pytest
 

@@ -10,7 +10,7 @@ class Calculator(object):
         features: Features,
     ) -> int:
         """Функция принимает на вход признаки и расчитывает одобренную сумму."""
-        if proba < 0.1 or features.income_category == 'rich':
+        if proba < self._threshold and features.income_category == 'rich':
             return 500
         if features.age_category == 'other':
             return 200
