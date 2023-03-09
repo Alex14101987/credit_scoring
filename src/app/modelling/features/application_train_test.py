@@ -42,7 +42,12 @@ application_train_test['Процентная ставка'] = ((all_data['AMT_CR
 
 application_train_test[['скор внеешних источников1', 'скор внеешних источников2', 'скор внеешних источников3']] = all_data[['EXT_SOURCE_1', 'EXT_SOURCE_2', 'EXT_SOURCE_3']]
 
-result = all_data.groupby(["CODE_GENDER", "NAME_EDUCATION_TYPE"])["AMT_INCOME_TOTAL"].mean().diff()
-application_train_test['разница емжду средним доходом в группе и доходом заявителя'] = all_data['AMT_CREDIT'].diff(result)
+result_train = train.groupby(["CODE_GENDER", "NAME_EDUCATION_TYPE"])["AMT_INCOME_TOTAL"].mean().diff()
+result_test = test.groupby(["CODE_GENDER", "NAME_EDUCATION_TYPE"])["AMT_INCOME_TOTAL"].mean().diff()
+x = pd.DataFrame()
+result = pd.concat((result_train, result_train)).reset_index(drop=True)
+train['разница'] = train['AMT_CREDIT'].diff(result_train)
+test['разница'] = test['AMT_CREDIT'].diff(result_test)
+application_train_test['разница емжду средним доходом в группе и доходом заявителя'] = pd.concat((train['разница'], test['разница'])).reset_index(drop=True)
 
 application_train_test.to_csv('application_train_test.csv', index = False)
